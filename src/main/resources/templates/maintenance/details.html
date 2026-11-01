@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Ticket #' + ${request.id} + ' — RentRoll'">Ticket Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-wrapper">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <main class="app-main">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <div class="app-content">
+            <div th:replace="~{fragments/alerts :: alerts}"></div>
+
+            <!-- Breadcrumb Navigation -->
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/maintenance}" class="text-decoration-none">Maintenance</a></li>
+                    <li class="breadcrumb-item active" aria-current="page" th:text="'Ticket #' + ${request.id}">Details</li>
+                </ol>
+            </nav>
+
+            <!-- Header -->
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span th:if="${request.status.name() == 'OPEN'}" class="badge-status badge-late"><i class="bi bi-exclamation-circle-fill"></i> Open Ticket</span>
+                        <span th:if="${request.status.name() == 'IN_PROGRESS'}" class="badge-status badge-pending"><i class="bi bi-gear-fill"></i> In Progress</span>
+                        <span th:if="${request.status.name() == 'RESOLVED'}" class="badge-status badge-paid"><i class="bi bi-check-circle-fill"></i> Resolved</span>
+                        <span class="text-muted small">Ticket #<span th:text="${request.id}">1</span></span>
+                    </div>
+                    <h2 class="h3 fw-bold text-dark mb-1" th:text="${request.title}">Title</h2>
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-house-door me-1"></i>
+                        <span th:text="${request.property.propertyName}">Property</span> &bull;
+                        <span th:text="${request.property.city}">City</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="row g-4" style="max-width: 980px;">
+                <!-- Main Request Info Column -->
+                <div class="col-lg-8">
+                    <div class="custom-card mb-4">
+                        <div class="custom-card-header">
+                            <h3 class="custom-card-title"><i class="bi bi-card-text text-teal"></i> Issue Description &amp; Details</h3>
+                            <span class="badge bg-light text-secondary border" th:text="${request.category.displayName}">Category</span>
+                        </div>
+                        <div class="custom-card-body">
+                            <h4 class="h6 fw-bold text-dark mb-2">Detailed Problem Description</h4>
+                            <div class="p-3 bg-light rounded-3 text-secondary mb-4" style="line-height: 1.7; white-space: pre-line;"
+                                 th:text="${request.description}">
+                                Description
+                            </div>
+
+                            <!-- Resolution Section if available -->
+                            <div th:if="${request.status.name() == 'RESOLVED' || request.resolutionNotes != null}" class="p-3 border rounded-3 mb-3 bg-success-subtle border-success-subtle">
+                                <h5 class="h6 fw-bold text-success mb-2"><i class="bi bi-check-circle-fill me-1"></i> Resolution Notes</h5>
+                                <p class="text-dark small mb-2" th:text="${request.resolutionNotes != null ? request.resolutionNotes : 'Marked as resolved.'}">Notes</p>
+                                <div class="text-muted" style="font-size: 0.75rem;" th:if="${request.resolvedAt != null}">
+                                    Resolved on: <span th:text="${#temporals.format(request.resolvedAt, 'dd MMM yyyy, hh:mm a')}">Date</span>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 text-secondary small pt-2 border-top">
+                                <div class="col-sm-6">
+                                    <strong>Reported By:</strong> <span th:text="${request.tenant.fullName}">Amit Kumar</span>
+                                </div>
+                                <div class="col-sm-6">
+                                    <strong>Submission Date:</strong> <span th:text="${#temporals.format(request.createdAt, 'dd MMM yyyy, hh:mm a')}">Date</span>
+                                </div>
+                                <div class="col-sm-6">
+                                    <strong>Priority Level:</strong>
+                                    <span th:if="${request.priority.name() == 'LOW'}" class="badge badge-priority-low">Low</span>
+                                    <span th:if="${request.priority.name() == 'MEDIUM'}" class="badge badge-priority-medium">Medium</span>
+                                    <span th:if="${request.priority.name() == 'HIGH'}" class="badge badge-priority-high">High Urgency</span>
+                                </div>
+                                <div class="col-sm-6">
+                                    <strong>Property Address:</strong> <span th:text="${request.property.fullAddress}">Address</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Status Update for Landlord/Admin -->
+                <div class="col-lg-4">
+                    <div sec:authorize="hasAnyRole('LANDLORD', 'ADMIN')" class="custom-card mb-4">
+                        <div class="custom-card-header">
+                            <h3 class="custom-card-title"><i class="bi bi-sliders text-teal"></i> Update Ticket Status</h3>
+                        </div>
+                        <div class="custom-card-body">
+                            <form th:action="@{/maintenance/{id}/status(id=${request.id})}" method="post">
+                                <div class="mb-3">
+                                    <label for="statusSelect" class="form-label small fw-semibold text-secondary">Status</label>
+                                    <select class="form-select form-select-sm" id="statusSelect" name="status">
+                                        <option th:each="st : ${statuses}"
+                                                th:value="${st}"
+                                                th:text="${st.displayName}"
+                                                th:selected="${request.status == st}">Status</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="resolutionNotes" class="form-label small fw-semibold text-secondary">Resolution / Progress Notes</label>
+                                    <textarea class="form-control form-control-sm" id="resolutionNotes" name="resolutionNotes" rows="3"
+                                              placeholder="e.g. Electrician scheduled for tomorrow, parts ordered..."
+                                              th:text="${request.resolutionNotes}"></textarea>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary-teal w-100 py-2 fw-semibold rounded-3">
+                                    <i class="bi bi-check2 me-1"></i> Update Progress
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Property Details Snapshot -->
+                    <div class="custom-card">
+                        <div class="custom-card-header">
+                            <h3 class="custom-card-title"><i class="bi bi-buildings text-teal"></i> Property Contact</h3>
+                        </div>
+                        <div class="custom-card-body small">
+                            <div class="fw-bold text-dark" th:text="${request.property.propertyName}">Property</div>
+                            <div class="text-muted mb-3" th:text="${request.property.fullAddress}">Address</div>
+
+                            <div class="p-2 bg-light rounded-2 mb-2">
+                                <div class="text-muted" style="font-size: 0.72rem;">Landlord Contact</div>
+                                <div class="fw-semibold text-dark" th:text="${request.property.landlord.fullName}">Owner</div>
+                                <div class="text-muted" th:text="${request.property.landlord.phoneNumber}">Phone</div>
+                            </div>
+
+                            <a th:href="@{/maintenance}" class="btn btn-light border w-100 mt-2">
+                                <i class="bi bi-arrow-left me-1"></i> All Tickets
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<div th:replace="~{fragments/footer :: scripts}"></div>
+</body>
+</html>
+

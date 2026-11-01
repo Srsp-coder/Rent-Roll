@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Reports &amp; Expiry Watch — RentRoll</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-wrapper">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <main class="app-main">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <div class="app-content">
+            <div th:replace="~{fragments/alerts :: alerts}"></div>
+
+            <!-- Header & Filter Form -->
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+                <div>
+                    <h2 class="h4 fw-bold text-dark mb-1">Financial Reports &amp; Lease Watch</h2>
+                    <p class="text-muted small mb-0">Monthly cashflow analytics, collection efficiency rate, and upcoming lease expirations.</p>
+                </div>
+                <div>
+                    <a th:href="@{/payments/export}" class="btn btn-outline-secondary btn-sm px-3 py-2 rounded-3 bg-white">
+                        <i class="bi bi-file-earmark-spreadsheet me-1 text-success"></i> Export Full CSV Ledger
+                    </a>
+                </div>
+            </div>
+
+            <!-- Month & Year Filter Selector -->
+            <div class="custom-card mb-4">
+                <div class="custom-card-body p-3">
+                    <form th:action="@{/reports}" method="get" class="row g-2 align-items-center">
+                        <div class="col-sm-5 col-md-4">
+                            <label class="form-label small fw-semibold text-secondary mb-1">Select Reporting Month</label>
+                            <select name="month" class="form-select">
+                                <option value="1" th:selected="${selectedMonth == 1}">January</option>
+                                <option value="2" th:selected="${selectedMonth == 2}">February</option>
+                                <option value="3" th:selected="${selectedMonth == 3}">March</option>
+                                <option value="4" th:selected="${selectedMonth == 4}">April</option>
+                                <option value="5" th:selected="${selectedMonth == 5}">May</option>
+                                <option value="6" th:selected="${selectedMonth == 6}">June</option>
+                                <option value="7" th:selected="${selectedMonth == 7}">July</option>
+                                <option value="8" th:selected="${selectedMonth == 8}">August</option>
+                                <option value="9" th:selected="${selectedMonth == 9}">September</option>
+                                <option value="10" th:selected="${selectedMonth == 10}">October</option>
+                                <option value="11" th:selected="${selectedMonth == 11}">November</option>
+                                <option value="12" th:selected="${selectedMonth == 12}">December</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-4 col-md-3">
+                            <label class="form-label small fw-semibold text-secondary mb-1">Year</label>
+                            <select name="year" class="form-select">
+                                <option th:each="y : ${availableYears}"
+                                        th:value="${y}"
+                                        th:text="${y}"
+                                        th:selected="${selectedYear == y}">2026</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-3 col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary-teal w-100" style="margin-top: 25px;">Generate</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Financial Summary Cards for the Chosen Month -->
+            <div class="row g-3 mb-4">
+                <!-- Expected Rent -->
+                <div class="col-sm-6 col-xl-3">
+                    <div class="stat-card accent-sky">
+                        <div class="stat-card-accent-bar"></div>
+                        <div class="stat-icon icon-sky"><i class="bi bi-calendar-event"></i></div>
+                        <div class="stat-label">Expected Rent</div>
+                        <div class="stat-value fs-4">₹<span th:text="${#numbers.formatDecimal(summary.expectedRent, 1, 'COMMA', 2, 'POINT')}">0</span></div>
+                        <div class="stat-subtext" th:text="${summary.monthName}">Month Year</div>
+                    </div>
+                </div>
+
+                <!-- Collected Rent -->
+                <div class="col-sm-6 col-xl-3">
+                    <div class="stat-card accent-emerald">
+                        <div class="stat-card-accent-bar"></div>
+                        <div class="stat-icon icon-emerald"><i class="bi bi-check2-circle"></i></div>
+                        <div class="stat-label">Collected Rent</div>
+                        <div class="stat-value fs-4 text-success">₹<span th:text="${#numbers.formatDecimal(summary.collectedRent, 1, 'COMMA', 2, 'POINT')}">0</span></div>
+                        <div class="stat-subtext">Realized in account</div>
+                    </div>
+                </div>
+
+                <!-- Outstanding Rent -->
+                <div class="col-sm-6 col-xl-3">
+                    <div class="stat-card accent-amber">
+                        <div class="stat-card-accent-bar"></div>
+                        <div class="stat-icon icon-amber"><i class="bi bi-hourglass-split"></i></div>
+                        <div class="stat-label">Outstanding Unpaid</div>
+                        <div class="stat-value fs-4 text-danger">₹<span th:text="${#numbers.formatDecimal(summary.outstandingRent, 1, 'COMMA', 2, 'POINT')}">0</span></div>
+                        <div class="stat-subtext">Pending settlement</div>
+                    </div>
+                </div>
+
+                <!-- Collection Percentage -->
+                <div class="col-sm-6 col-xl-3">
+                    <div class="stat-card">
+                        <div class="stat-card-accent-bar"></div>
+                        <div class="stat-icon icon-teal"><i class="bi bi-pie-chart-fill"></i></div>
+                        <div class="stat-label">Collection Rate</div>
+                        <div class="stat-value fs-4 text-teal" style="color: #0d9488;">
+                            <span th:text="${summary.collectionPercentage}">0.0</span>%
+                        </div>
+                        <div class="stat-subtext">
+                            <span class="text-danger fw-semibold" th:text="${summary.overduePaymentCount}">0</span> overdue payment(s)
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Two Columns: Month Payments & Expiring Leases -->
+            <div class="row g-4">
+                <!-- Payments for this selected month -->
+                <div class="col-lg-7">
+                    <div class="custom-card h-100">
+                        <div class="custom-card-header">
+                            <h3 class="custom-card-title">
+                                <i class="bi bi-receipt-cutoff text-teal"></i>
+                                Rent Ledger for <span th:text="${summary.monthName}">Month</span>
+                            </h3>
+                            <span class="badge bg-light text-secondary border" th:text="${#lists.size(summary.monthPayments)} + ' Records'">0</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table custom-table">
+                                <thead>
+                                <tr>
+                                    <th>Property</th>
+                                    <th>Tenant</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Paid Date</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:if="${#lists.isEmpty(summary.monthPayments)}">
+                                    <td colspan="5" class="text-center py-4 text-muted">No scheduled rent payments found for this month.</td>
+                                </tr>
+                                <tr th:each="p : ${summary.monthPayments}">
+                                    <td>
+                                        <div class="fw-semibold text-dark small" th:text="${p.property.propertyName}">Property</div>
+                                        <div class="text-muted" style="font-size: 0.72rem;">Due: <span th:text="${#temporals.format(p.dueDate, 'dd MMM yyyy')}">Date</span></div>
+                                    </td>
+                                    <td class="small" th:text="${p.tenant.fullName}">Tenant</td>
+                                    <td>
+                                        <div class="fw-bold small">₹<span th:text="${#numbers.formatDecimal(p.totalAmount, 1, 'COMMA', 2, 'POINT')}">0</span></div>
+                                        <div th:if="${p.lateFee.compareTo(T(java.math.BigDecimal).ZERO) > 0}" class="text-danger" style="font-size: 0.7rem;">
+                                            +₹<span th:text="${p.lateFee}"></span> Late Fee
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span th:if="${p.status.name() == 'PAID'}" class="badge-status badge-paid">Paid</span>
+                                        <span th:if="${p.status.name() == 'PENDING'}" class="badge-status badge-pending">Pending</span>
+                                        <span th:if="${p.status.name() == 'LATE'}" class="badge-status badge-late">Overdue</span>
+                                        <span th:if="${p.status.name() == 'UPCOMING'}" class="badge-status badge-upcoming">Upcoming</span>
+                                    </td>
+                                    <td class="small text-muted" th:text="${p.paymentDate != null ? #temporals.format(p.paymentDate, 'dd MMM yyyy') : '&mdash;'}">&mdash;</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leases Expiring Within 60 Days -->
+                <div class="col-lg-5">
+                    <div class="custom-card h-100">
+                        <div class="custom-card-header">
+                            <h3 class="custom-card-title"><i class="bi bi-hourglass-split text-warning"></i> Leases Expiring in Next 60 Days</h3>
+                            <span class="badge bg-warning-subtle text-warning" th:text="${#lists.size(summary.expiringLeases)} + ' Leases'">0</span>
+                        </div>
+                        <div class="custom-card-body p-0">
+                            <div th:if="${#lists.isEmpty(summary.expiringLeases)}" class="text-center py-5 text-muted">
+                                <i class="bi bi-shield-check text-success fs-2 mb-2 d-block"></i>
+                                <span class="small">No active leases expiring in the next 60 days.</span>
+                            </div>
+                            <div th:unless="${#lists.isEmpty(summary.expiringLeases)}" class="list-group list-group-flush">
+                                <a th:each="lease : ${summary.expiringLeases}" th:href="@{/leases/{id}(id=${lease.id})}"
+                                   class="list-group-item list-group-item-action py-3 px-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="fw-semibold text-dark small" th:text="${lease.property.propertyName}">Property</span>
+                                        <span class="badge bg-danger-subtle text-danger small">Expires <span th:text="${#temporals.format(lease.endDate, 'dd MMM yyyy')}">Date</span></span>
+                                    </div>
+                                    <div class="text-muted small">Tenant: <strong class="text-dark" th:text="${lease.tenant.fullName}">Name</strong></div>
+                                    <div class="text-muted" style="font-size: 0.72rem;">Monthly Rent: ₹<span th:text="${#numbers.formatDecimal(lease.monthlyRent, 1, 'COMMA', 0, 'POINT')}">0</span></div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<div th:replace="~{fragments/footer :: scripts}"></div>
+</body>
+</html>
+

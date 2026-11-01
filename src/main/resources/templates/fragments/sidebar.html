@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head></head>
+<body>
+<aside th:fragment="sidebar" id="appSidebar" class="app-sidebar">
+    <!-- Brand Header -->
+    <div class="sidebar-header">
+        <div class="brand-icon">
+            <i class="bi bi-buildings"></i>
+        </div>
+        <div>
+            <div class="brand-text">RentRoll</div>
+            <div class="brand-subtitle">Property &amp; Rent OS</div>
+        </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="sidebar-nav">
+        <div class="nav-section-title">Overview</div>
+        <a th:href="@{/dashboard}" class="nav-link" th:classappend="${activeNav == 'dashboard'} ? 'active' : ''">
+            <i class="bi bi-speedometer2"></i>
+            <span>Dashboard</span>
+        </a>
+
+        <!-- Landlord & Admin Links -->
+        <th:block sec:authorize="hasAnyRole('LANDLORD', 'ADMIN')">
+            <div class="nav-section-title">Management</div>
+            <a th:href="@{/properties}" class="nav-link" th:classappend="${activeNav == 'properties'} ? 'active' : ''">
+                <i class="bi bi-house-door"></i>
+                <span>Properties</span>
+            </a>
+            <a th:href="@{/leases}" class="nav-link" th:classappend="${activeNav == 'leases'} ? 'active' : ''">
+                <i class="bi bi-file-earmark-text"></i>
+                <span>Leases</span>
+            </a>
+            <a th:href="@{/payments}" class="nav-link" th:classappend="${activeNav == 'payments'} ? 'active' : ''">
+                <i class="bi bi-cash-stack"></i>
+                <span>Rent Payments</span>
+            </a>
+            <a th:href="@{/maintenance}" class="nav-link" th:classappend="${activeNav == 'maintenance'} ? 'active' : ''">
+                <i class="bi bi-tools"></i>
+                <span>Maintenance</span>
+            </a>
+            <a th:href="@{/reports}" class="nav-link" th:classappend="${activeNav == 'reports'} ? 'active' : ''">
+                <i class="bi bi-graph-up-arrow"></i>
+                <span>Financial Reports</span>
+            </a>
+        </th:block>
+
+        <!-- Tenant Links -->
+        <th:block sec:authorize="hasRole('TENANT')">
+            <div class="nav-section-title">My Tenancy</div>
+            <a th:href="@{/leases}" class="nav-link" th:classappend="${activeNav == 'leases'} ? 'active' : ''">
+                <i class="bi bi-file-earmark-text"></i>
+                <span>My Lease</span>
+            </a>
+            <a th:href="@{/payments}" class="nav-link" th:classappend="${activeNav == 'payments'} ? 'active' : ''">
+                <i class="bi bi-cash-coin"></i>
+                <span>Rent &amp; Dues</span>
+            </a>
+            <a th:href="@{/maintenance}" class="nav-link" th:classappend="${activeNav == 'maintenance'} ? 'active' : ''">
+                <i class="bi bi-tools"></i>
+                <span>Repair Requests</span>
+            </a>
+        </th:block>
+
+        <!-- Admin Only Section -->
+        <th:block sec:authorize="hasRole('ADMIN')">
+            <div class="nav-section-title">System Admin</div>
+            <a th:href="@{/users}" class="nav-link" th:classappend="${activeNav == 'users'} ? 'active' : ''">
+                <i class="bi bi-people"></i>
+                <span>User Accounts</span>
+            </a>
+        </th:block>
+    </nav>
+
+    <!-- Sidebar Footer / User Profile Summary -->
+    <div class="sidebar-footer">
+        <div class="user-badge">
+            <div class="user-avatar" th:text="${currentUser != null ? #strings.substring(currentUser.fullName, 0, 1).toUpperCase() : 'U'}">
+                U
+            </div>
+            <div class="user-details">
+                <div class="user-name" th:text="${currentUser != null ? currentUser.fullName : 'Signed In'}">User Name</div>
+                <span class="user-role-pill" th:text="${currentUser != null ? currentUser.role.displayName : 'Logged In'}">ROLE</span>
+            </div>
+        </div>
+    </div>
+</aside>
+</body>
+</html>
+

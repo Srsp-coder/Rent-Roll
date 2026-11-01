@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head></head>
+<body>
+<div th:fragment="alerts">
+    <!-- Success Alert -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 shadow-sm border-0 mb-4" role="alert" style="background-color: #ecfdf5; color: #065f46; border-left: 4px solid #10b981 !important;">
+        <i class="bi bi-check-circle-fill fs-5 text-success"></i>
+        <div class="flex-grow-1" th:text="${successMessage}">Operation completed successfully.</div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Error Alert -->
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 shadow-sm border-0 mb-4" role="alert" style="background-color: #fef2f2; color: #991b1b; border-left: 4px solid #ef4444 !important;">
+        <i class="bi bi-exclamation-triangle-fill fs-5 text-danger"></i>
+        <div class="flex-grow-1" th:text="${errorMessage}">An error occurred during processing.</div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Info Alert -->
+    <div th:if="${infoMessage}" class="alert alert-info alert-dismissible fade show d-flex align-items-center gap-2 shadow-sm border-0 mb-4" role="alert" style="background-color: #f0f9ff; color: #075985; border-left: 4px solid #0284c7 !important;">
+        <i class="bi bi-info-circle-fill fs-5 text-info"></i>
+        <div class="flex-grow-1" th:text="${infoMessage}">Information notice.</div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+</div>
+</body>
+</html>
+

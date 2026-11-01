@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Lease Agreement — RentRoll</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-wrapper">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <main class="app-main">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <div class="app-content">
+            <div th:replace="~{fragments/alerts :: alerts}"></div>
+
+            <!-- Breadcrumb Navigation -->
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/leases}" class="text-decoration-none">Leases</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">New Agreement</li>
+                </ol>
+            </nav>
+
+            <div class="row g-4" style="max-width: 1020px;">
+                <!-- Main Form Column -->
+                <div class="col-lg-8">
+                    <div class="custom-card">
+                        <div class="custom-card-header">
+                            <h3 class="custom-card-title"><i class="bi bi-file-earmark-plus text-teal"></i> Create New Lease Agreement</h3>
+                        </div>
+                        <div class="custom-card-body p-4">
+                            <form th:action="@{/leases/new}" th:object="${leaseForm}" method="post">
+
+                                <!-- Property Selection -->
+                                <div class="mb-3">
+                                    <label for="propertyId" class="form-label fw-semibold text-secondary">Rental Property <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="propertyId" th:field="*{propertyId}"
+                                            th:classappend="${#fields.hasErrors('propertyId')} ? 'is-invalid' : ''">
+                                        <option value="">-- Choose Property --</option>
+                                        <option th:each="prop : ${properties}"
+                                                th:value="${prop.id}"
+                                                th:text="${prop.propertyName + ' (' + prop.city + ') - Asking: ₹' + prop.monthlyRent}">Property</option>
+                                    </select>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('propertyId')}" th:errors="*{propertyId}">Error</div>
+                                </div>
+
+                                <!-- Tenant Selection -->
+                                <div class="mb-3">
+                                    <label for="tenantId" class="form-label fw-semibold text-secondary">Assign Tenant <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="tenantId" th:field="*{tenantId}"
+                                            th:classappend="${#fields.hasErrors('tenantId')} ? 'is-invalid' : ''">
+                                        <option value="">-- Select Registered Tenant --</option>
+                                        <option th:each="t : ${tenants}"
+                                                th:value="${t.id}"
+                                                th:text="${t.fullName + ' (' + t.email + ')'}">Tenant</option>
+                                    </select>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('tenantId')}" th:errors="*{tenantId}">Error</div>
+                                </div>
+
+                                <!-- Dates Row -->
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label for="startDate" class="form-label fw-semibold text-secondary">Lease Start Date <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control" id="startDate" th:field="*{startDate}"
+                                               th:classappend="${#fields.hasErrors('startDate')} ? 'is-invalid' : ''">
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('startDate')}" th:errors="*{startDate}">Error</div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label for="endDate" class="form-label fw-semibold text-secondary">Lease End Date <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control" id="endDate" th:field="*{endDate}"
+                                               th:classappend="${#fields.hasErrors('endDate')} ? 'is-invalid' : ''">
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('endDate')}" th:errors="*{endDate}">Error</div>
+                                    </div>
+                                </div>
+
+                                <!-- Financials Row -->
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-4">
+                                        <label for="monthlyRent" class="form-label fw-semibold text-secondary">Monthly Rent (₹ INR) <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light">₹</span>
+                                            <input type="number" step="100" class="form-control" id="monthlyRent" th:field="*{monthlyRent}"
+                                                   placeholder="35000"
+                                                   th:classappend="${#fields.hasErrors('monthlyRent')} ? 'is-invalid' : ''">
+                                            <div class="invalid-feedback" th:if="${#fields.hasErrors('monthlyRent')}" th:errors="*{monthlyRent}">Error</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label for="securityDeposit" class="form-label fw-semibold text-secondary">Security Deposit (₹ INR) <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light">₹</span>
+                                            <input type="number" step="1000" class="form-control" id="securityDeposit" th:field="*{securityDeposit}"
+                                                   placeholder="100000"
+                                                   th:classappend="${#fields.hasErrors('securityDeposit')} ? 'is-invalid' : ''">
+                                            <div class="invalid-feedback" th:if="${#fields.hasErrors('securityDeposit')}" th:errors="*{securityDeposit}">Error</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label for="dueDayOfMonth" class="form-label fw-semibold text-secondary">Rent Due Day <span class="text-danger">*</span></label>
+                                        <input type="number" min="1" max="28" class="form-control" id="dueDayOfMonth" th:field="*{dueDayOfMonth}"
+                                               placeholder="5"
+                                               th:classappend="${#fields.hasErrors('dueDayOfMonth')} ? 'is-invalid' : ''">
+                                        <div class="form-text">Day 1 &mdash; 28 of each month.</div>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('dueDayOfMonth')}" th:errors="*{dueDayOfMonth}">Error</div>
+                                    </div>
+                                </div>
+
+                                <!-- Submit Actions -->
+                                <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                                    <a th:href="@{/leases}" class="btn btn-light border px-4">Cancel</a>
+                                    <button type="submit" class="btn btn-primary-teal px-4">
+                                        <i class="bi bi-magic me-1"></i> Create Agreement &amp; Generate Schedule
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Explanation / Info Side Column -->
+                <div class="col-lg-4">
+                    <div class="custom-card mb-4">
+                        <div class="custom-card-header">
+                            <h3 class="custom-card-title"><i class="bi bi-lightbulb text-teal"></i> Automatic Rent Schedule</h3>
+                        </div>
+                        <div class="custom-card-body small text-secondary">
+                            <p>When you create a lease, RentRoll automatically generates individual monthly rent payment ledger records covering every month from the Start Date through the End Date.</p>
+                            <ul class="ps-3 mb-3">
+                                <li><strong>No overlapping leases:</strong> The system ensures this property has no existing active lease on the chosen dates.</li>
+                                <li><strong>Safe against duplicates:</strong> If regenerated, duplicate cycles are strictly avoided.</li>
+                                <li><strong>5% Late-fee engine:</strong> Payments that cross the due date automatically incur a 5% late fee upon settlement.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<div th:replace="~{fragments/footer :: scripts}"></div>
+</body>
+</html>
+

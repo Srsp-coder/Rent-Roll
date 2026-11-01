@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tenant Portal — RentRoll</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-wrapper">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <main class="app-main">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <div class="app-content">
+            <div th:replace="~{fragments/alerts :: alerts}"></div>
+
+            <!-- Welcome Header -->
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+                <div>
+                    <h2 class="h4 fw-bold text-dark mb-1">
+                        Hello, <span th:text="${currentUser.fullName}">Tenant</span>!
+                    </h2>
+                    <p class="text-muted small mb-0">Overview of your tenancy, upcoming rent dues, and maintenance tickets.</p>
+                </div>
+                <div>
+                    <a th:href="@{/maintenance/new}" class="btn btn-primary-teal btn-sm px-3 py-2 rounded-3">
+                        <i class="bi bi-tools me-1"></i> Request a Repair
+                    </a>
+                </div>
+            </div>
+
+            <!-- Tenancy Overview Cards -->
+            <div class="row g-3 mb-4">
+                <!-- Monthly Rent -->
+                <div class="col-sm-6 col-lg-3">
+                    <div class="stat-card">
+                        <div class="stat-card-accent-bar"></div>
+                        <div class="stat-icon icon-teal"><i class="bi bi-wallet2"></i></div>
+                        <div class="stat-label">Monthly Rent</div>
+                        <div class="stat-value fs-4">₹<span th:text="${#numbers.formatDecimal(stats.monthlyRent, 1, 'COMMA', 0, 'POINT')}">0</span></div>
+                        <div class="stat-subtext">Base monthly rate</div>
+                    </div>
+                </div>
+
+                <!-- Next Due Date -->
+                <div class="col-sm-6 col-lg-3">
+                    <div class="stat-card accent-sky">
+                        <div class="stat-card-accent-bar"></div>
+                        <div class="stat-icon icon-sky"><i class="bi bi-calendar-event"></i></div>
+                        <div class="stat-label">Next Rent Due</div>
+                        <div class="stat-value fs-4" th:text="${stats.nextRentDueDate != null ? #temporals.format(stats.nextRentDueDate, 'dd MMM yyyy') : 'No Dues'}">N/A</div>
+                        <div class="stat-subtext">Payment due date</div>
+                    </div>
+                </div>
+
+                <!-- Outstanding Balance -->
+                <div class="col-sm-6 col-lg-3">
+                    <div class="stat-card accent-amber">
+                        <div class="stat-card-accent-bar"></div>
+                        <div class="stat-icon icon-amber"><i class="bi bi-cash-stack"></i></div>
+                        <div class="stat-label">Outstanding Balance</div>
+                        <div class="stat-value fs-4" th:classappend="${stats.outstandingBalance.compareTo(T(java.math.BigDecimal).ZERO) > 0} ? 'text-danger' : 'text-success'">
+                            ₹<span th:text="${#numbers.formatDecimal(stats.outstandingBalance, 1, 'COMMA', 0, 'POINT')}">0</span>
+                        </div>
+                        <div class="stat-subtext">Unsettled rent dues</div>
+                    </div>
+                </div>
+
+                <!-- Open Repairs -->
+                <div class="col-sm-6 col-lg-3">
+                    <div class="stat-card accent-rose">
+                        <div class="stat-card-accent-bar"></div>
+                        <div class="stat-icon icon-rose"><i class="bi bi-wrench-adjustable"></i></div>
+                        <div class="stat-label">Open Repairs</div>
+                        <div class="stat-value" th:text="${stats.openRequestsCount}">0</div>
+                        <div class="stat-subtext">Active tickets</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Property & Active Lease Card -->
+            <div class="custom-card mb-4" th:if="${stats.activeLease != null}">
+                <div class="custom-card-header">
+                    <h3 class="custom-card-title"><i class="bi bi-house-door text-teal"></i> My Leased Property</h3>
+                    <span class="badge bg-success-subtle text-success">Active Agreement</span>
+                </div>
+                <div class="custom-card-body">
+                    <div class="row g-4 align-items-center">
+                        <div class="col-md-7">
+                            <h4 class="h5 fw-bold text-dark mb-1" th:text="${stats.activeLease.property.propertyName}">Property Title</h4>
+                            <p class="text-muted small mb-3">
+                                <i class="bi bi-geo-alt me-1 text-danger"></i>
+                                <span th:text="${stats.activeLease.property.fullAddress}">Address</span>
+                            </p>
+                            <div class="d-flex flex-wrap gap-3 text-secondary small">
+                                <div><strong class="text-dark">Type:</strong> <span th:text="${stats.activeLease.property.propertyType.displayName}">Type</span></div>
+                                <div><strong class="text-dark">Bedrooms:</strong> <span th:text="${stats.activeLease.property.bedrooms}">2</span> BHK</div>
+                                <div><strong class="text-dark">Landlord:</strong> <span th:text="${stats.activeLease.property.landlord.fullName}">Owner</span></div>
+                                <div><strong class="text-dark">Owner Phone:</strong> <span th:text="${stats.activeLease.property.landlord.phoneNumber}">Phone</span></div>
+                            </div>
+                        </div>
+                        <div class="col-md-5 border-start-md">
+                            <div class="p-3 bg-light rounded-3">
+                                <div class="d-flex justify-content-between mb-2 small">
+                                    <span class="text-muted">Agreement Duration:</span>
+                                    <span class="fw-semibold text-dark">
+                                        <span th:text="${#temporals.format(stats.activeLease.startDate, 'dd MMM yyyy')}">Start</span> &mdash;
+                                        <span th:text="${#temporals.format(stats.activeLease.endDate, 'dd MMM yyyy')}">End</span>
+                                    </span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2 small">
+                                    <span class="text-muted">Security Deposit:</span>
+                                    <span class="fw-semibold text-dark">₹<span th:text="${#numbers.formatDecimal(stats.activeLease.securityDeposit, 1, 'COMMA', 0, 'POINT')}">0</span></span>
+                                </div>
+                                <div class="d-flex justify-content-between small">
+                                    <span class="text-muted">Rent Due Day:</span>
+                                    <span class="fw-semibold text-teal" style="color: #0d9488;">
+                                        Every month on the <span th:text="${stats.activeLease.dueDayOfMonth}">5</span>th
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Two Columns: Payment History & Maintenance Tickets -->
+            <div class="row g-4">
+                <!-- Payment History -->
+                <div class="col-lg-7">
+                    <div class="custom-card h-100">
+                        <div class="custom-card-header">
+                            <h3 class="custom-card-title"><i class="bi bi-clock-history text-teal"></i> Rent Payments History</h3>
+                            <a th:href="@{/payments}" class="btn btn-sm btn-link text-decoration-none">Full Ledger &rarr;</a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table custom-table">
+                                <thead>
+                                <tr>
+                                    <th>Period</th>
+                                    <th>Due Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Paid On</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:if="${#lists.isEmpty(stats.paymentHistory)}">
+                                    <td colspan="5" class="text-center py-4 text-muted">No rent records yet.</td>
+                                </tr>
+                                <tr th:each="p : ${stats.paymentHistory}">
+                                    <td class="fw-semibold text-dark small" th:text="${p.rentalPeriod}">Month</td>
+                                    <td class="small text-muted" th:text="${#temporals.format(p.dueDate, 'dd MMM yyyy')}">Due Date</td>
+                                    <td>
+                                        <div class="fw-bold small">₹<span th:text="${#numbers.formatDecimal(p.totalAmount, 1, 'COMMA', 2, 'POINT')}">0</span></div>
+                                    </td>
+                                    <td>
+                                        <span th:if="${p.status.name() == 'PAID'}" class="badge-status badge-paid"><i class="bi bi-check-circle-fill"></i> Paid</span>
+                                        <span th:if="${p.status.name() == 'PENDING'}" class="badge-status badge-pending"><i class="bi bi-clock-fill"></i> Pending</span>
+                                        <span th:if="${p.status.name() == 'LATE'}" class="badge-status badge-late"><i class="bi bi-exclamation-triangle-fill"></i> Overdue</span>
+                                        <span th:if="${p.status.name() == 'UPCOMING'}" class="badge-status badge-upcoming"><i class="bi bi-calendar3"></i> Upcoming</span>
+                                    </td>
+                                    <td class="small text-muted" th:text="${p.paymentDate != null ? #temporals.format(p.paymentDate, 'dd MMM yyyy') : '&mdash;'}">&mdash;</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Maintenance Requests -->
+                <div class="col-lg-5">
+                    <div class="custom-card h-100">
+                        <div class="custom-card-header">
+                            <h3 class="custom-card-title"><i class="bi bi-tools text-primary"></i> Repair Requests</h3>
+                            <a th:href="@{/maintenance/new}" class="btn btn-sm btn-primary-teal rounded-2 px-2 py-1" style="font-size: 0.75rem;">+ New Request</a>
+                        </div>
+                        <div class="custom-card-body p-0">
+                            <div th:if="${#lists.isEmpty(stats.maintenanceRequests)}" class="text-center py-4 text-muted">
+                                <i class="bi bi-check2-circle text-success fs-3 mb-2 d-block"></i>
+                                <span class="small">All clear! You have no open maintenance requests.</span>
+                            </div>
+                            <div th:unless="${#lists.isEmpty(stats.maintenanceRequests)}" class="list-group list-group-flush">
+                                <a th:each="req : ${stats.maintenanceRequests}" th:href="@{/maintenance/{id}(id=${req.id})}"
+                                   class="list-group-item list-group-item-action py-3 px-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="fw-semibold text-dark small" th:text="${req.title}">Title</span>
+                                        <span th:if="${req.status.name() == 'OPEN'}" class="badge bg-danger-subtle text-danger small">Open</span>
+                                        <span th:if="${req.status.name() == 'IN_PROGRESS'}" class="badge bg-warning-subtle text-warning small">In Progress</span>
+                                        <span th:if="${req.status.name() == 'RESOLVED'}" class="badge bg-success-subtle text-success small">Resolved</span>
+                                    </div>
+                                    <div class="text-muted text-truncate" style="font-size: 0.75rem;" th:text="${req.description}">Details</div>
+                                    <div class="mt-2 text-muted" style="font-size: 0.7rem;">
+                                        Category: <span th:text="${req.category.displayName}">Plumbing</span> &bull;
+                                        <span th:text="${#temporals.format(req.createdAt, 'dd MMM yyyy')}">Date</span>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<div th:replace="~{fragments/footer :: scripts}"></div>
+</body>
+</html>
+

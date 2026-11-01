@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance &amp; Repairs — RentRoll</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-wrapper">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <main class="app-main">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <div class="app-content">
+            <div th:replace="~{fragments/alerts :: alerts}"></div>
+
+            <!-- Header -->
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+                <div>
+                    <h2 class="h4 fw-bold text-dark mb-1">Maintenance &amp; Repair Tickets</h2>
+                    <p class="text-muted small mb-0">Manage plumbing, electrical, and structural maintenance requests across units.</p>
+                </div>
+                <div>
+                    <a th:href="@{/maintenance/new}" class="btn btn-primary-teal btn-sm px-3 py-2 rounded-3">
+                        <i class="bi bi-tools me-1"></i> Raise Repair Ticket
+                    </a>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="custom-card mb-4">
+                <div class="custom-card-body p-3">
+                    <form th:action="@{/maintenance}" method="get" class="row g-2 align-items-center">
+                        <div class="col-md-5">
+                            <select name="status" class="form-select">
+                                <option value="">All Resolution Statuses</option>
+                                <option th:each="st : ${statuses}"
+                                        th:value="${st}"
+                                        th:text="${st.displayName}"
+                                        th:selected="${selectedStatus != null && selectedStatus == st}">Status</option>
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <select name="priority" class="form-select">
+                                <option value="">All Priorities</option>
+                                <option th:each="pr : ${priorities}"
+                                        th:value="${pr}"
+                                        th:text="${pr.displayName}"
+                                        th:selected="${selectedPriority != null && selectedPriority == pr}">Priority</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-grid">
+                            <button type="submit" class="btn btn-primary-teal">Filter</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div th:if="${#lists.isEmpty(requests)}" class="empty-state">
+                <i class="bi bi-tools empty-state-icon"></i>
+                <h3 class="empty-state-title">No Maintenance Requests Found</h3>
+                <p class="empty-state-desc">There are no maintenance or service requests matching your criteria.</p>
+                <a th:href="@{/maintenance/new}" class="btn btn-primary-teal">
+                    <i class="bi bi-plus-circle me-1"></i> Submit a Ticket
+                </a>
+            </div>
+
+            <!-- Maintenance Tickets Table -->
+            <div th:unless="${#lists.isEmpty(requests)}" class="custom-card">
+                <div class="table-responsive">
+                    <table class="table custom-table">
+                        <thead>
+                        <tr>
+                            <th>Ticket ID</th>
+                            <th>Title &amp; Category</th>
+                            <th>Property</th>
+                            <th>Tenant</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Raised Date</th>
+                            <th>Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="req : ${requests}">
+                            <td class="fw-bold text-teal" th:text="'#' + ${req.id}">#1</td>
+                            <td>
+                                <div class="fw-semibold text-dark small" th:text="${req.title}">Tap leaking</div>
+                                <span class="badge bg-light text-secondary border mt-1" style="font-size: 0.7rem;" th:text="${req.category.displayName}">Plumbing</span>
+                            </td>
+                            <td>
+                                <span class="small fw-semibold text-dark" th:text="${req.property.propertyName}">Property</span>
+                                <div class="text-muted" style="font-size: 0.72rem;" th:text="${req.property.city}">City</div>
+                            </td>
+                            <td>
+                                <span class="small text-dark" th:text="${req.tenant.fullName}">Tenant</span>
+                            </td>
+                            <td>
+                                <span th:if="${req.priority.name() == 'LOW'}" class="badge badge-priority-low">Low</span>
+                                <span th:if="${req.priority.name() == 'MEDIUM'}" class="badge badge-priority-medium">Medium</span>
+                                <span th:if="${req.priority.name() == 'HIGH'}" class="badge badge-priority-high"><i class="bi bi-exclamation-triangle-fill me-1"></i> High</span>
+                            </td>
+                            <td>
+                                <span th:if="${req.status.name() == 'OPEN'}" class="badge-status badge-late"><i class="bi bi-exclamation-circle-fill"></i> Open</span>
+                                <span th:if="${req.status.name() == 'IN_PROGRESS'}" class="badge-status badge-pending"><i class="bi bi-gear-fill"></i> In Progress</span>
+                                <span th:if="${req.status.name() == 'RESOLVED'}" class="badge-status badge-paid"><i class="bi bi-check-circle-fill"></i> Resolved</span>
+                            </td>
+                            <td class="small text-muted" th:text="${#temporals.format(req.createdAt, 'dd MMM yyyy')}">Date</td>
+                            <td>
+                                <a th:href="@{/maintenance/{id}(id=${req.id})}" class="btn btn-sm btn-outline-teal py-1 px-2 rounded-2">
+                                    Manage
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<div th:replace="~{fragments/footer :: scripts}"></div>
+</body>
+</html>
+
