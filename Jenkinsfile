@@ -1,9 +1,11 @@
+
 pipeline {
     agent any
 
     environment {
         JAVA_HOME = 'C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.12.101-hotspot'
         MAVEN_HOME = 'C:\\Program Files\\apache-maven-3.9.16'
+        GITLEAKS = 'C:\\Users\\Admin\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gitleaks.Gitleaks_Microsoft.Winget.Source_8wekyb3d8bbwe\\gitleaks.exe'
         PATH = "${JAVA_HOME}\\bin;${MAVEN_HOME}\\bin;${env.PATH}"
     }
 
@@ -16,8 +18,8 @@ pipeline {
 
         stage('Secret Scan') {
             steps {
-                bat 'gitleaks version'
-                bat 'gitleaks git .'
+                bat '"%GITLEAKS%" version'
+                bat '"%GITLEAKS%" git .'
             }
         }
 
