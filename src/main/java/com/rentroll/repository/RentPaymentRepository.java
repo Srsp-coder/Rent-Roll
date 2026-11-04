@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -18,7 +17,13 @@ import java.util.List;
 @Repository
 public interface RentPaymentRepository extends JpaRepository<RentPayment, Long> {
 
+    List<RentPayment> findAllByOrderByDueDateDesc();
+
+    List<RentPayment> findByStatusOrderByDueDateDesc(PaymentStatus status);
+
     List<RentPayment> findByPropertyLandlordIdOrderByDueDateDesc(Long landlordId);
+
+    List<RentPayment> findByPropertyLandlordIdAndStatusOrderByDueDateDesc(Long landlordId, PaymentStatus status);
 
     List<RentPayment> findByTenantIdOrderByDueDateDesc(Long tenantId);
 
@@ -32,23 +37,23 @@ public interface RentPaymentRepository extends JpaRepository<RentPayment, Long> 
     @Query("SELECT p FROM RentPayment p WHERE p.dueDate < :today AND p.status IN ('UPCOMING', 'PENDING')")
     List<RentPayment> findPaymentsNeedingLateStatus(@Param("today") LocalDate today);
 
-    // Filter payments for a Landlord
+    // Filter payments for a Landlord with search query
     @Query("SELECT p FROM RentPayment p WHERE p.property.landlord.id = :landlordId " +
            "AND (:status IS NULL OR p.status = :status) " +
-           "AND (:query IS NULL OR LOWER(p.property.propertyName) LIKE LOWER(CONCAT('%', :query, '%')) " +
-           "     OR LOWER(p.tenant.fullName) LIKE LOWER(CONCAT('%', :query, '%')) " +
-           "     OR LOWER(p.rentalPeriod) LIKE LOWER(CONCAT('%', :query, '%'))) " +
+           "AND (LOWER(p.property.propertyName) LIKE CONCAT('%', :query, '%') " +
+           "     OR LOWER(p.tenant.fullName) LIKE CONCAT('%', :query, '%') " +
+           "     OR LOWER(p.rentalPeriod) LIKE CONCAT('%', :query, '%')) " +
            "ORDER BY p.dueDate DESC")
     List<RentPayment> filterLandlordPayments(@Param("landlordId") Long landlordId,
                                             @Param("status") PaymentStatus status,
                                             @Param("query") String query);
 
-    // Filter payments for Admin
+    // Filter payments for Admin with search query
     @Query("SELECT p FROM RentPayment p WHERE " +
            "(:status IS NULL OR p.status = :status) " +
-           "AND (:query IS NULL OR LOWER(p.property.propertyName) LIKE LOWER(CONCAT('%', :query, '%')) " +
-           "     OR LOWER(p.tenant.fullName) LIKE LOWER(CONCAT('%', :query, '%')) " +
-           "     OR LOWER(p.rentalPeriod) LIKE LOWER(CONCAT('%', :query, '%'))) " +
+           "AND (LOWER(p.property.propertyName) LIKE CONCAT('%', :query, '%') " +
+           "     OR LOWER(p.tenant.fullName) LIKE CONCAT('%', :query, '%') " +
+           "     OR LOWER(p.rentalPeriod) LIKE CONCAT('%', :query, '%')) " +
            "ORDER BY p.dueDate DESC")
     List<RentPayment> filterAllPayments(@Param("status") PaymentStatus status,
                                         @Param("query") String query);
@@ -101,4 +106,3 @@ public interface RentPaymentRepository extends JpaRepository<RentPayment, Long> 
     @Query("SELECT COALESCE(SUM(p.totalAmount), 0) FROM RentPayment p WHERE p.status IN ('PENDING', 'LATE')")
     BigDecimal sumAllOutstandingRent();
 }
-

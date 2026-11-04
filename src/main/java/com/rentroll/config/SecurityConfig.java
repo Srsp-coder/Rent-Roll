@@ -43,8 +43,7 @@ public class SecurityConfig {
                     "/js/**",
                     "/images/**",
                     "/favicon.ico",
-                    "/error",
-                    "/h2-console/**"
+                    "/error"
                 ).permitAll()
                 // Admin-only management endpoints
                 .requestMatchers("/users/**").hasRole("ADMIN")
@@ -69,14 +68,6 @@ public class SecurityConfig {
             )
             .exceptionHandling(ex -> ex
                 .accessDeniedPage("/access-denied")
-            )
-            // Allow H2 console frames in development
-            .headers(headers -> headers
-                .frameOptions(frame -> frame.sameOrigin())
-            )
-            // Disable CSRF for H2 console only
-            .csrf(csrf -> csrf
-                .ignoringRequestMatchers(new AntPathRequestMatcher("/h2-console/**"))
             );
 
         return http.build();

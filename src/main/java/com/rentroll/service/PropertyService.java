@@ -44,13 +44,25 @@ public class PropertyService {
      */
     public List<Property> getPropertiesForCurrentUser(String search, PropertyType type) {
         User currentUser = securityUtils.getRequiredCurrentUser();
-
-        String query = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+        boolean hasQuery = (search != null && !search.trim().isEmpty());
+        String cleanQuery = hasQuery ? search.trim().toLowerCase() : null;
 
         if (currentUser.getRole() == Role.ADMIN) {
-            return propertyRepository.searchAllProperties(query, type);
+            if (!hasQuery && type == null) {
+                return propertyRepository.findAll();
+            }
+            if (!hasQuery) {
+                return propertyRepository.findByPropertyType(type);
+            }
+            return propertyRepository.searchAllProperties(cleanQuery, type);
         } else if (currentUser.getRole() == Role.LANDLORD) {
-            return propertyRepository.searchLandlordProperties(currentUser.getId(), query, type);
+            if (!hasQuery && type == null) {
+                return propertyRepository.findByLandlordId(currentUser.getId());
+            }
+            if (!hasQuery) {
+                return propertyRepository.findByLandlordIdAndPropertyType(currentUser.getId(), type);
+            }
+            return propertyRepository.searchLandlordProperties(currentUser.getId(), cleanQuery, type);
         } else {
             // Tenant sees the property they are currently leasing
             return leaseRepository.findFirstByTenantIdAndStatus(currentUser.getId(), com.rentroll.entity.LeaseStatus.ACTIVE)
@@ -120,4 +132,3 @@ public class PropertyService {
         return propertyRepository.countByLandlordId(landlordId);
     }
 }
-

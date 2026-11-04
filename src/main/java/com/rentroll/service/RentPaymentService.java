@@ -39,12 +39,24 @@ public class RentPaymentService {
      */
     public List<RentPayment> getPaymentsForCurrentUser(PaymentStatus status, String search) {
         User currentUser = securityUtils.getRequiredCurrentUser();
-        String query = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+        String query = (search != null && !search.trim().isEmpty()) ? search.trim().toLowerCase() : null;
 
         if (currentUser.getRole() == Role.ADMIN) {
-            return rentPaymentRepository.filterAllPayments(status, query);
+            if (query != null) {
+                return rentPaymentRepository.filterAllPayments(status, query);
+            } else if (status != null) {
+                return rentPaymentRepository.findByStatusOrderByDueDateDesc(status);
+            } else {
+                return rentPaymentRepository.findAllByOrderByDueDateDesc();
+            }
         } else if (currentUser.getRole() == Role.LANDLORD) {
-            return rentPaymentRepository.filterLandlordPayments(currentUser.getId(), status, query);
+            if (query != null) {
+                return rentPaymentRepository.filterLandlordPayments(currentUser.getId(), status, query);
+            } else if (status != null) {
+                return rentPaymentRepository.findByPropertyLandlordIdAndStatusOrderByDueDateDesc(currentUser.getId(), status);
+            } else {
+                return rentPaymentRepository.findByPropertyLandlordIdOrderByDueDateDesc(currentUser.getId());
+            }
         } else {
             // Tenant sees their own payments
             return rentPaymentRepository.findByTenantIdOrderByDueDateDesc(currentUser.getId());

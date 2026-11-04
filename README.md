@@ -294,3 +294,4 @@ Here is an example of what happens when a landlord clicks **"Confirm & Mark as P
   By default, H2 runs in-memory (`jdbc:h2:mem:rentrolldb`). Every time the application starts, `DataInitializer` seeds fresh development data. If you want persistent file storage, update `spring.datasource.url=jdbc:h2:file:./data/rentrolldb` in `application.properties`.
 - **Thymeleaf Template Parsing Issues:**
   Thymeleaf cache is set to `false` for development (`spring.thymeleaf.cache=false`), so HTML modifications take effect immediately without rebuilding the application.
+

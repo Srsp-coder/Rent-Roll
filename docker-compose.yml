@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: rentroll-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-rentrolldb}
+      POSTGRES_USER: ${POSTGRES_USER:-rentroll}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rentroll123}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-rentroll} -d ${POSTGRES_DB:-rentrolldb}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rentroll-app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8085}:8085"
+    environment:
+      PORT: 8085
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-rentrolldb}
+      DB_USERNAME: ${POSTGRES_USER:-rentroll}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-rentroll123}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

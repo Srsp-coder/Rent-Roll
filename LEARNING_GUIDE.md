@@ -250,3 +250,4 @@ Try making these small enhancements to test your understanding:
 3. **Change the late fee percentage:** Open `RentPaymentService.java` and change `LATE_FEE_RATE` from `0.05` to `0.08` (8%). Run `mvn test` to see how the test alerts you to update the test expectation!
 
 Happy coding!
+
