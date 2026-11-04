@@ -6,6 +6,11 @@ pipeline {
         JAVA_HOME = 'C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.12.101-hotspot'
         MAVEN_HOME = 'C:\\Program Files\\apache-maven-3.9.16'
         GITLEAKS = 'C:\\Users\\Admin\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gitleaks.Gitleaks_Microsoft.Winget.Source_8wekyb3d8bbwe\\gitleaks.exe'
+
+        DB_URL = 'jdbc:postgresql://localhost:5433/rentrolldb'
+        DB_USERNAME = 'rentroll'
+        DB_PASSWORD = 'rentroll123'
+
         PATH = "${JAVA_HOME}\\bin;${MAVEN_HOME}\\bin;${env.PATH}"
     }
 
