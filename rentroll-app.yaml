@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rentroll-app
+  namespace: rentroll
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rentroll-app
+  template:
+    metadata:
+      labels:
+        app: rentroll-app
+    spec:
+      containers:
+        - name: rentroll
+          image: saipranavsr/rentroll:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8085
+          env:
+            - name: PORT
+              value: "8085"
+            - name: DB_URL
+              value: "jdbc:postgresql://postgres:5432/rentrolldb"
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: rentroll-db-secret
+                  key: POSTGRES_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rentroll-db-secret
+                  key: POSTGRES_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rentroll-service
+  namespace: rentroll
+spec:
+  type: LoadBalancer
+  selector:
+    app: rentroll-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8085

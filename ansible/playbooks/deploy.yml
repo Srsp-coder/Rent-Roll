@@ -1,0 +1,50 @@
+---
+- name: Deploy RentRoll application to AKS
+  hosts: local
+  connection: local
+  gather_facts: false
+
+  vars:
+    kubeconfig: /mnt/c/Users/Admin/aks-jenkins-kubeconfig
+    k8s_namespace: rentroll
+    deployment_name: rentroll-app
+    container_name: rentroll
+    docker_image: saipranavsr/rentroll
+    image_tag: latest
+
+  tasks:
+    - name: Update RentRoll application image
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        context: aks-rentroll-admin
+        state: present
+        kind: Deployment
+        namespace: "{{ k8s_namespace }}"
+        name: "{{ deployment_name }}"
+        definition:
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: "{{ container_name }}"
+                    image: "{{ docker_image }}:{{ image_tag }}"
+
+    - name: Wait for RentRoll deployment rollout
+      ansible.builtin.command:
+        cmd: >-
+          kubectl --kubeconfig {{ kubeconfig }}
+          rollout status deployment/{{ deployment_name }}
+          -n {{ k8s_namespace }} --timeout=180s
+      changed_when: false
+
+    - name: Verify RentRoll pods
+      ansible.builtin.command:
+        cmd: >-
+          kubectl --kubeconfig {{ kubeconfig }}
+          get pods -n {{ k8s_namespace }}
+      register: pod_status
+      changed_when: false
+
+    - name: Display pod status
+      ansible.builtin.debug:
+        var: pod_status.stdout_lines
