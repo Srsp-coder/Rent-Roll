@@ -35,7 +35,7 @@ pipeline {
         }
         stage('Docker Build') {
             steps {
-                bat 'docker build -t rentroll:latest .'
+                bat 'docker build -t rentroll:%BUILD_NUMBER% .'
             }
         }
         stage('Docker Push') {
@@ -45,9 +45,11 @@ pipeline {
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_TOKEN'
                 )]) {
-                    bat 'docker login -u %DOCKER_USER% -p %DOCKER_TOKEN%'
-                    bat 'docker tag rentroll:latest %DOCKER_USER%/rentroll:latest'
-                    bat 'docker push %DOCKER_USER%/rentroll:latest'
+                    bat '''
+                        docker login -u %DOCKER_USER% -p %DOCKER_TOKEN%
+                        docker tag rentroll:%BUILD_NUMBER% %DOCKER_USER%/rentroll:%BUILD_NUMBER%
+                        docker push %DOCKER_USER%/rentroll:%BUILD_NUMBER%
+                    '''
                 }
             }
         }
@@ -64,6 +66,33 @@ pipeline {
                 }
             }
         }
+        
+        stage('Deploy to AKS') {
+            steps {
+                withCredentials([
+                    file(
+                        credentialsId: 'aks-kubeconfig',
+                        variable: 'KUBECONFIG_FILE'
+                    ),
+                    usernamePassword(
+                        credentialsId: 'dockerhub-creds',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_TOKEN'
+                    )
+                ]) {
+                    bat '''
+                        echo Deploying RentRoll build %BUILD_NUMBER% to AKS...
+
+                        kubectl --kubeconfig "%KUBECONFIG_FILE%" set image deployment/rentroll-app rentroll=%DOCKER_USER%/rentroll:%BUILD_NUMBER% -n rentroll
+
+                        kubectl --kubeconfig "%KUBECONFIG_FILE%" rollout status deployment/rentroll-app -n rentroll --timeout=180s
+
+                        kubectl --kubeconfig "%KUBECONFIG_FILE%" get pods -n rentroll
+                    '''
+                }
+            }
+        }
+
     }
 
     post {
