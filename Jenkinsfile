@@ -51,6 +51,19 @@ pipeline {
                 }
             }
         }
+        stage('Test AKS Connection') {
+            steps {
+                withCredentials([file(
+                    credentialsId: 'aks-kubeconfig',
+                    variable: 'KUBECONFIG_FILE'
+                )]) {
+                    bat '''
+                        kubectl --kubeconfig "%KUBECONFIG_FILE%" get nodes
+                        kubectl --kubeconfig "%KUBECONFIG_FILE%" get pods -n rentroll
+                    '''
+                }
+            }
+        }
     }
 
     post {
