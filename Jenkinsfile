@@ -33,6 +33,11 @@ pipeline {
                 bat 'mvn --batch-mode clean verify'
             }
         }
+        stage('Docker Build') {
+            steps {
+                bat 'docker build -t rentroll:latest .'
+            }
+        }
     }
 
     post {
