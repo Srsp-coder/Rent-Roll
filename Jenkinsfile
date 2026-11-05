@@ -67,31 +67,17 @@ pipeline {
             }
         }
         
-        stage('Deploy to AKS') {
+
+        stage('Deploy to AKS using Ansible') {
             steps {
-                withCredentials([
-                    file(
-                        credentialsId: 'aks-kubeconfig',
-                        variable: 'KUBECONFIG_FILE'
-                    ),
-                    usernamePassword(
-                        credentialsId: 'dockerhub-creds',
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_TOKEN'
-                    )
-                ]) {
-                    bat '''
-                        echo Deploying RentRoll build %BUILD_NUMBER% to AKS...
+                bat '''
+                    echo Deploying RentRoll build %BUILD_NUMBER% using Ansible...
 
-                        kubectl --kubeconfig "%KUBECONFIG_FILE%" set image deployment/rentroll-app rentroll=%DOCKER_USER%/rentroll:%BUILD_NUMBER% -n rentroll
-
-                        kubectl --kubeconfig "%KUBECONFIG_FILE%" rollout status deployment/rentroll-app -n rentroll --timeout=180s
-
-                        kubectl --kubeconfig "%KUBECONFIG_FILE%" get pods -n rentroll
-                    '''
-                }
+                    wsl -d Ubuntu-22.04 -u srsp -- bash -lc "cd /mnt/d/source/projects/RentRoll/ansible && export ANSIBLE_CONFIG=/mnt/d/source/projects/RentRoll/ansible/ansible.cfg && /home/srsp/.local/bin/ansible-playbook -i inventory/hosts.ini playbooks/deploy.yml -e image_tag=%BUILD_NUMBER%"
+                '''
             }
         }
+
 
     }
 
