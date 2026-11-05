@@ -38,6 +38,19 @@ pipeline {
                 bat 'docker build -t rentroll:latest .'
             }
         }
+        stage('Docker Push') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_TOKEN'
+                )]) {
+                    bat 'docker login -u %DOCKER_USER% -p %DOCKER_TOKEN%'
+                    bat 'docker tag rentroll:latest %DOCKER_USER%/rentroll:latest'
+                    bat 'docker push %DOCKER_USER%/rentroll:latest'
+                }
+            }
+        }
     }
 
     post {
