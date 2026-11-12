@@ -2,7 +2,6 @@
 pipeline {
     agent any
 
-
     environment {
         JAVA_HOME = 'C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.12.101-hotspot'
         MAVEN_HOME = 'C:\\Program Files\\apache-maven-3.9.16'
@@ -42,9 +41,7 @@ pipeline {
             }
         }
 
-        // OPTIONAL DIND EXPERIMENT
         stage('DinD Experiment') {
-
             steps {
                 catchError(
                     buildResult: 'SUCCESS',
@@ -59,15 +56,25 @@ pipeline {
 
                                 docker run -d --privileged --name ${name} docker:29-dind
 
-                                timeout /t 20 /nobreak >nul
+                                if errorlevel 1 exit /b 1
+
+                                echo ===== WAITING FOR INNER DOCKER DAEMON =====
+
+                                powershell -NoProfile -ExecutionPolicy Bypass -Command "\\\$ready = \\\$false; for (\\\$i = 0; \\\$i -lt 30; \\\$i++) { docker exec ${name} docker info; if (\\\$LASTEXITCODE -eq 0) { \\\$ready = \\\$true; break }; Start-Sleep -Seconds 2 }; if (-not \\\$ready) { docker logs ${name}; exit 1 }"
+
+                                if errorlevel 1 exit /b 1
 
                                 echo ===== PULLING NGINX =====
 
                                 docker exec ${name} docker pull nginx
 
+                                if errorlevel 1 exit /b 1
+
                                 echo ===== RUNNING INNER NGINX =====
 
                                 docker exec ${name} docker run -d --name nginx-child nginx
+
+                                if errorlevel 1 exit /b 1
 
                                 echo ===== INNER CONTAINER SIZE =====
 
@@ -75,7 +82,11 @@ pipeline {
 
                                 echo ===== INNER IMAGE STORAGE =====
 
-                                docker exec ${name} docker system df
+                                docker exec ${name} docker system df -v
+
+                                echo ===== INNER DOCKER STORAGE DIRECTORY =====
+
+                                docker exec ${name} du -sh /var/lib/docker
 
                                 echo ===== OUTER DIND RESOURCE USAGE =====
 
