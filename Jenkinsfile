@@ -5,7 +5,7 @@ pipeline {
     parameters {
         booleanParam(
             name: 'RUN_DIND_EXPERIMENT',
-            defaultValue: false,
+            defaultValue: true,
             description: 'Run Docker-in-Docker experiment'
         )
     }
