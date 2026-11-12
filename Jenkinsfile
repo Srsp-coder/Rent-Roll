@@ -60,7 +60,7 @@ pipeline {
 
                                 echo ===== WAITING FOR INNER DOCKER DAEMON =====
 
-                                powershell -NoProfile -ExecutionPolicy Bypass -Command "\\\$ready = \\\$false; for (\\\$i = 0; \\\$i -lt 30; \\\$i++) { docker exec ${name} docker info; if (\\\$LASTEXITCODE -eq 0) { \\\$ready = \\\$true; break }; Start-Sleep -Seconds 2 }; if (-not \\\$ready) { docker logs ${name}; exit 1 }"
+                                docker exec ${name} sh -c "for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30; do docker info >/dev/null 2>&1 && exit 0; sleep 2; done; exit 1"
 
                                 if errorlevel 1 exit /b 1
 
