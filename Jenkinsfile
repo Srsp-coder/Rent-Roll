@@ -2,13 +2,6 @@
 pipeline {
     agent any
 
-    parameters {
-        booleanParam(
-            name: 'RUN_DIND_EXPERIMENT',
-            defaultValue: true,
-            description: 'Run Docker-in-Docker experiment'
-        )
-    }
 
     environment {
         JAVA_HOME = 'C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.12.101-hotspot'
@@ -50,12 +43,7 @@ pipeline {
         }
 
         // OPTIONAL DIND EXPERIMENT
-        stage('Optional - DinD Experiment') {
-            when {
-                expression {
-                    params.RUN_DIND_EXPERIMENT
-                }
-            }
+        stage('DinD Experiment') {
 
             steps {
                 catchError(
