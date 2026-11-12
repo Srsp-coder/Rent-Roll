@@ -2,6 +2,14 @@
 pipeline {
     agent any
 
+    parameters {
+        booleanParam(
+            name: 'RUN_DIND_EXPERIMENT',
+            defaultValue: false,
+            description: 'Run Docker-in-Docker experiment'
+        )
+    }
+
     environment {
         JAVA_HOME = 'C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.12.101-hotspot'
         MAVEN_HOME = 'C:\\Program Files\\apache-maven-3.9.16'
@@ -15,6 +23,7 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 checkout scm
@@ -33,11 +42,72 @@ pipeline {
                 bat 'mvn --batch-mode clean verify'
             }
         }
+
         stage('Docker Build') {
             steps {
                 bat 'docker build -t rentroll:%BUILD_NUMBER% .'
             }
         }
+
+        // OPTIONAL DIND EXPERIMENT
+        stage('Optional - DinD Experiment') {
+            when {
+                expression {
+                    params.RUN_DIND_EXPERIMENT
+                }
+            }
+
+            steps {
+                catchError(
+                    buildResult: 'SUCCESS',
+                    stageResult: 'UNSTABLE'
+                ) {
+                    script {
+                        def name = "rentroll-dind-${BUILD_NUMBER}"
+
+                        try {
+                            bat """
+                                echo ===== STARTING DIND =====
+
+                                docker run -d --privileged --name ${name} docker:29-dind
+
+                                timeout /t 20 /nobreak >nul
+
+                                echo ===== PULLING NGINX =====
+
+                                docker exec ${name} docker pull nginx
+
+                                echo ===== RUNNING INNER NGINX =====
+
+                                docker exec ${name} docker run -d --name nginx-child nginx
+
+                                echo ===== INNER CONTAINER SIZE =====
+
+                                docker exec ${name} docker ps -s
+
+                                echo ===== INNER IMAGE STORAGE =====
+
+                                docker exec ${name} docker system df
+
+                                echo ===== OUTER DIND RESOURCE USAGE =====
+
+                                docker stats --no-stream ${name}
+
+                                echo ===== OUTER CONTAINER SIZE =====
+
+                                docker ps -s --filter "name=${name}"
+                            """
+                        }
+                        finally {
+                            echo 'Cleaning up temporary DinD container...'
+
+                            bat "docker rm -fv ${name} >nul 2>&1 || exit /b 0"
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Docker Push') {
             steps {
                 withCredentials([usernamePassword(
@@ -53,6 +123,7 @@ pipeline {
                 }
             }
         }
+
         stage('Test AKS Connection') {
             steps {
                 withCredentials([file(
@@ -66,7 +137,6 @@ pipeline {
                 }
             }
         }
-        
 
         stage('Deploy to AKS using Ansible') {
             steps {
@@ -77,14 +147,13 @@ pipeline {
                 '''
             }
         }
-
-
     }
 
     post {
         success {
             echo 'RentRoll CI completed successfully!'
         }
+
         failure {
             echo 'RentRoll CI failed. Check the stage logs.'
         }
